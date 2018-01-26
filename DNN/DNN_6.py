@@ -121,7 +121,7 @@ def main(unused_argv):
     test_set = pd.read_csv("Illustris_1_Test.csv", skipinitialspace=True,
                            skiprows=1, names=COLUMNS)
 
-    """
+
     # Standardize Training Set (see SciKit Learn), write into new dataframe
     training_set_scaled = {j: preprocessing.StandardScaler().fit_transform(training_set[j].values)
                             for j in FEATURES}
@@ -142,7 +142,7 @@ def main(unused_argv):
                                         columns=test_set.columns)
 
     test_set_scaled_df['SubhaloMass'] = test_set['SubhaloMass'].values
-    """
+
 
 
 
@@ -157,7 +157,7 @@ def main(unused_argv):
 
     # Set up a 4 layer deep neural network with 7, 6, 5, 4 units, respectively
     regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols,
-                                                hidden_units=[7,7,7,7,7,7,7,7,7,7,7,6,5,4],
+                                                hidden_units=[7,6,5,4],
                                                 model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model",
                                                   #config=tf.contrib.learn.RunConfig
                                                         #save_checkpoints_steps=1000
