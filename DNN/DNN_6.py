@@ -81,6 +81,7 @@ COLUMNS = ['New_Index',
             'SubhaloVelZ']
 
 # Column / feature names of inputs
+#   ## signifies results from corelation matrix
 FEATURES = ['SubhaloBHMass',                            ## 0.775 corr. with Halo Mass
             'SubhaloGasMetallicity',                    ## 0.113 corr. with Halo Mass
             #'SubhaloGasMetallicitySfr',                ## 0.108 corr. with Halo Mass
@@ -171,7 +172,7 @@ def main(unused_argv):
                                               )
 
 
-    # Train the neural network for 10,000 steps, using the
+    # Train the neural network for 2,000 steps, using the
     # pre-processed and standardized Training Set
     regressor.fit(input_fn=lambda: input_fn(training_set),
                     steps = 2000)
@@ -202,7 +203,7 @@ def main(unused_argv):
     predictions = list(itertools.islice(y, 6000))
     print("Predictions: {}".format(str(predictions)))
 
-    # Write Test Set Halo Mass predictions to a CSV
+    # Write first 6,000 of Test Set Halo Mass predictions to a CSV
     #df = pd.DataFrame(np.array(list(predictions)))
     #print (df)
     #df.to_csv('predicted_halo_masses_smallNN_alt.csv')
