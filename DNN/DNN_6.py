@@ -2,182 +2,94 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from tensorflow.contrib.learn.python.learn.metric_spec import MetricSpec
-#from tensorflow.contrib.metrics.python.ops import metric_ops
-from sklearn.preprocessing import MinMaxScaler
-from sklearn import preprocessing
-
-import csv
-import itertools
-import pandas as pd
+import argparse
 import tensorflow as tf
-import numpy as np
 
-tf.logging.set_verbosity(tf.logging.INFO)
-
-# TESTING OTHER BRANCH
+import dm_data
 
 
 """
+NEURAL NETWORK: PREDICTING HALO MASS FROM GALAXY PROPERTIES
 
-NEURAL NETWORK V6: PREDICTING HALO MASS FROM GALAXY PROPERTIES
+ACTIVE INPUTS - "FEATURES":     Black Hole Mass
+                                Gas Metallicity
+                                Star Metallicity
+                                Stellar Mass
+                                Halo Velocities (X, Y, Z)
 
+OUPUT - "LABEL":                Halo Mass
 
-CURRENT INPUTS:     Black Hole Mass
-                    Gas Metallicity
-                    Star Metallicity
-                    Stellar Mass
-                    Halo Velocities (X, Y, Z)
-
-OUPUT:              Halo Mass
-
-DATA:               Illustris-1 (filtered)
-
+DATA:                           Illustris-1 (randomized, indices preserved)
 """
 
 
-# Exact same column / feature names as pre-processed Illustris_1 CSV
-COLUMNS = ['New_Index',
-            'Pre_Random_Index',
-            'SubhaloBHMass',
-            'SubhaloBHMdot',
-            'SubhaloGasMetallicity',
-            'SubhaloGasMetallicityHalfRad',
-            'SubhaloGasMetallicityMaxRad',
-            'SubhaloGasMetallicitySfr',
-            'SubhaloGasMetallicitySfrWeighted',
-            'SubhaloGrNr',
-            'SubhaloHalfmassRad',
-            'SubhaloIDMostbound',
-            'SubhaloLen',
-            'SubhaloMass',
-            'SubhaloMassInHalfRad',
-            'SubhaloMassInMaxRad',
-            'SubhaloMassInRad',
-            'SubhaloParent',
-            'SubhaloSFR',
-            'SubhaloSFRinHalfRad',
-            'SubhaloSFRinMaxRad',
-            'SubhaloSFRinRad',
-            'SubhaloStarMetallicity',
-            'SubhaloStarMetallicityHalfRad',
-            'SubhaloStarMetallicityMaxRad',
-            'SubhaloStellarPhotometricsMassInRad',
-            'SubhaloStellarPhotometricsRad',
-            'SubhaloVelDisp',
-            'SubhaloVmax',
-            'SubhaloVmaxRad',
-            'SubhaloWindMass',
-            'SubhaloStellarPhotometricsU',
-            'SubhaloStellarPhotometricsB',
-            'SubhaloStellarPhotometricsV',
-            'SubhaloStellarPhotometricsK',
-            'SubhaloStellarPhotometricsg',
-            'SubhaloStellarPhotometricsr',
-            'SubhaloStellarPhotometricsi',
-            'SubhaloStellarPhotometricsz',
-            'SubhaloVelX',
-            'SubhaloVelY',
-            'SubhaloVelZ']
 
-# Column / feature names of inputs
+# Column names of values to be used as input features
 #   ## signifies results from corelation matrix
 FEATURES = ['SubhaloBHMass',                            ## 0.775 corr. with Halo Mass
             'SubhaloGasMetallicity',                    ## 0.113 corr. with Halo Mass
-            #'SubhaloGasMetallicitySfr',                ## 0.108 corr. with Halo Mass
-            #'SubhaloSFR',                              ## 0.070 corr. with Halo Mass
+            'SubhaloGasMetallicitySfr',                ## 0.108 corr. with Halo Mass
+            'SubhaloSFR',                              ## 0.070 corr. with Halo Mass
             'SubhaloStarMetallicity',                   ## 0.170 corr. with Halo Mass
             'SubhaloStellarPhotometricsMassInRad',      ## 0.746 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsRad',           ## 0.380 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsU',             ## -0.153 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsB',             ## -0.161 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsV',             ## -0.167 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsK',             ## -0.172 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsg',             ## -0.163 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsr',             ## -0.169 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsi',             ## -0.171 corr. with Halo Mass
-            #'SubhaloStellarPhotometricsz',             ## -0.172 corr. with Halo Mass
+            'SubhaloStellarPhotometricsRad',           ## 0.380 corr. with Halo Mass
+            'SubhaloStellarPhotometricsU',             ## -0.153 corr. with Halo Mass
+            'SubhaloStellarPhotometricsB',             ## -0.161 corr. with Halo Mass
+            'SubhaloStellarPhotometricsV',             ## -0.167 corr. with Halo Mass
+            'SubhaloStellarPhotometricsK',             ## -0.172 corr. with Halo Mass
+            'SubhaloStellarPhotometricsg',             ## -0.163 corr. with Halo Mass
+            'SubhaloStellarPhotometricsr',             ## -0.169 corr. with Halo Mass
+            'SubhaloStellarPhotometricsi',             ## -0.171 corr. with Halo Mass
+            'SubhaloStellarPhotometricsz',             ## -0.172 corr. with Halo Mass
             'SubhaloVelX',                              ## -0.00168 corr. with Halo Mass
             'SubhaloVelY',                              ## 0.00215 corr. with Halo Mass
             'SubhaloVelZ'                               ## 0.00147 corr. with Halo Mass
             ]
 
-# Column / feature name of output
-LABEL =     'SubhaloMass'
 
 
-# Custom pipeline for easy input feature manipulation,
-# returns input columns and output column as TensorFlow constants
-def input_fn(data_set):
-    feature_cols = {k: tf.constant(data_set[k].values) for k in FEATURES}
-    #labels = tf.cast(tf.constant(data_set[LABEL].values), tf.float32)
-    labels = tf.constant(data_set[LABEL].values)
-    return feature_cols, labels
+parser = argparse.ArgumentParser()
+parser.add_argument('--batch_size', default=1000, type=int, help='batch size')
+parser.add_argument('--train_steps', default=1000, type=int,
+                    help='number of training steps')
 
 
-def main(unused_argv):
-    # Read in Illustris pre-processed CSV's as dataframes, renaming columns to COLUMNS
-    training_set = pd.read_csv("Illustris_1_Training.csv", skipinitialspace=True,
-                               skiprows=1, names=COLUMNS)
-    test_set = pd.read_csv("Illustris_1_Test.csv", skipinitialspace=True,
-                           skiprows=1, names=COLUMNS)
+def main(argv):
+    args = parser.parse_args(argv[1:])
+
+    # Fetch a  pair of dataframes (features, labels) for training and testing data
+    # features_dataframe: all feature columns except label column {subhalo mass}
+    # labels_dataframe: only label column {subhalo mass}
+    (train_features, train_label), (test_features, test_label) = dm_data.load_data()
 
 
-    # Standardize Training Set (see SciKit Learn), write into new dataframe
-    training_set_scaled = {j: preprocessing.StandardScaler().fit_transform(training_set[j].values)
-                            for j in FEATURES}
-
-    training_set_scaled_df = pd.DataFrame(training_set_scaled,
-                                            index = training_set.index,
-                                            columns=training_set.columns)
-
-    training_set_scaled_df['SubhaloMass'] = training_set['SubhaloMass'].values
+    # Sets up TF "feature columns" which each identify feature name, type, and input processing
+    # These feature columns are empty tensors, they just set up the input framework for the Estimator
+    # For details: https://www.tensorflow.org/get_started/feature_columns
+    # *** Still working on enabling normalization here ***
+    feature_cols = [tf.feature_column.numeric_column(key=k) for k in FEATURES]
 
 
-    # Standardize Test Set (see SciKit Learn), write into new dataframe
-    test_set_scaled = {j: preprocessing.StandardScaler().fit_transform(test_set[j].values)
-                        for j in FEATURES}
-
-    test_set_scaled_df = pd.DataFrame(test_set_scaled,
-                                        index = test_set.index,
-                                        columns=test_set.columns)
-
-    test_set_scaled_df['SubhaloMass'] = test_set['SubhaloMass'].values
+    # Define the structure of the deep neural network and the destination for the model checkpoint files
+    regressor = tf.estimator.DNNRegressor(feature_columns=feature_cols,
+                                            hidden_units=[15,13,10,7,5],
+                                            model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model"
+                                            )
 
 
+    # Train the neural network for steps specified above and at batch size specificed above, using Training data
+    regressor.train(input_fn=lambda: dm_data.train_input_fn(train_features, train_label, args.batch_size),
+                    steps=args.train_steps)
 
 
+    # Evaluate the neural network, using Test data
+    eval_result = regressor.evaluate(
+        input_fn=lambda:dm_data.eval_input_fn(test_features, test_label, args.batch_size))
+
+    print('\nTest Data MSE: {0:f}\n'.format(eval_result))
 
 
-    # Convert CSV feature inputs to TF columns
-    feature_cols = [tf.feature_column.numeric_column(k) for k in FEATURES]
-
-
-
-
-
-    # Set up a 4 layer deep neural network with 7, 6, 5, 4 units, respectively
-    regressor = tf.contrib.learn.DNNRegressor(feature_columns=feature_cols,
-                                                hidden_units=[7,6,5,4],
-                                                model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model",
-                                                  #config=tf.contrib.learn.RunConfig
-                                                        #save_checkpoints_steps=1000
-                                                        #save_checkpoints_secs=None
-                                                        #save_summary_steps=20,
-
-                                                #optimizer=tf.train.ProximalAdagradOptimizer,
-                                                #learning_rate=0.01,
-                                                #l1_regularization_strength=0.001,
-                                                #activation_fn=tf.nn.crelu
-                                              )
-
-
-    # Train the neural network for 2,000 steps, using the
-    # pre-processed and standardized Training Set
-    regressor.fit(input_fn=lambda: input_fn(training_set),
-                    steps = 2000)
-
-
+    """
     # Test the neural network on the pre-processed and standardized Test Set
     # and calculate the Mean Squared Error
     ev = regressor.evaluate(input_fn=lambda: input_fn(test_set),
@@ -198,6 +110,7 @@ def main(unused_argv):
     print("(TEST DATA) Loss: {0:f}".format(loss_score))
 
 
+
     # Print the exact Halo Mass predictions from the Test Set
     y = regressor.predict_scores(input_fn=lambda: input_fn(test_set))
     predictions = list(itertools.islice(y, 6000))
@@ -210,6 +123,9 @@ def main(unused_argv):
 
     # To call Tensorboard: 'tensorboard --logdir=...'
 
+    """
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
+    tf.logging.set_verbosity(tf.logging.INFO)
     tf.app.run()
