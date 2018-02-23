@@ -21,7 +21,6 @@ ACTIVE INPUTS - "FEATURES":     Black Hole Mass
                                 SFR
                                 Star Metallicity
                                 Stellar Mass
-                                'PhotometricsRad'
                                 3D Velocities (X, Y, Z)
 
 OUPUT - "LABEL":                Halo Mass
@@ -57,11 +56,11 @@ CHOSEN_FEATURES = ['SubhaloBHMass',                            ## 0.775 corr. wi
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size',
-                        default=1024,
+                        default=8192,
                         type=int,
                         help='batch size')
 parser.add_argument('--train_steps',
-                        default=3000,
+                        default=1000,
                         type=int,
                         help='number of training steps')
 
@@ -121,8 +120,13 @@ def main(argv):
     #   HyperTune (https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
     regressor = tf.estimator.DNNRegressor(
                         feature_columns=feature_cols,
-                        hidden_units=[10,10,10],
-                        model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model"
+                        hidden_units=[18],
+                        model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model",
+                        #optimizer=tf.train.ProximalAdagradOptimizer(
+                                            #learning_rate=0.1,
+                                            #l1_regularization_strength=0.001
+                                        #),
+                        #dropout=0.3
                         )
 
     # Train the neural network on Training set
@@ -130,6 +134,8 @@ def main(argv):
                 input_fn=from_dataset(train),
                 steps=args.train_steps
                 )
+
+    print("\nNOW RUN THE NN ON THE TEST SET")
 
     # Evaluate the neural network on Test set
     eval_result = regressor.evaluate(
@@ -161,19 +167,19 @@ def main(argv):
 
 
     # Write a local CSV of neural network predicted halo mass (from Test Set)
-    predictions_df.to_csv('NN_halo_mass_test_set2.csv')
+    predictions_df.to_csv('NN_halo_mass_test_set18.csv')
     #print("\nTESTING PREDICTIONS")
     #print()
     #print(predictions_df.head())
 
     # Write a local CSV of true halo mass (from Test Set)
-    test_label.to_csv('true_halo_mass_test_set2.csv')
+    test_label.to_csv('true_halo_mass_test_set18.csv')
     #print("\nTESTING TRUES")
     #print()
     #print(test_label.head())
 
     # Write a local CSV of all input features (from Test Set)
-    test_features.to_csv('features_test_set2.csv')
+    test_features.to_csv('features_test_set18.csv')
     #print("\nTESTING FEATURES")
     #print()
     #print(test_features.head())

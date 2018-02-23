@@ -49,7 +49,8 @@ CSV_COLUMN_NAMES = ['ignore_this',
 
 
 def raw_dataframe():
-    # Illustris_1.csv pre-filtering: remove halos with 0 stellar mass & 0 particle mass
+    # Illustris_1.csv pre-filtering: remove halos with 0 stellar mass 
+    #       and halos with <200 particles
 
     # Load data from Illustris_1.csv into Dataframe and reassign column names
     df = pd.read_csv("Illustris_1.csv",

@@ -8,15 +8,15 @@ green_patch = mpatches.Patch(color='green', label='True Illustris Data')
 
 
 
-TRUE_data = np.genfromtxt('true_halo_mass_test_set.csv',
+TRUE_data = np.genfromtxt('true_halo_mass_test_set18.csv',
                             delimiter=',',
                             names={'True_Values', 'Original_Index'})
 
-PREDICT_data = np.genfromtxt('NN_halo_mass_test_set.csv',
+PREDICT_data = np.genfromtxt('NN_halo_mass_test_set18.csv',
                                 delimiter=',',
                                 names=True)
 
-FEATURES_data = np.genfromtxt('features_test_set.csv',
+FEATURES_data = np.genfromtxt('features_test_set18.csv',
                                 delimiter=',',
                                 names=True)
 
