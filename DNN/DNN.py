@@ -33,35 +33,35 @@ DATA:                           Illustris-1
 
 # Column names of values to be used as input features
 #   ## signifies results from corelation matrix
-CHOSEN_FEATURES = ['SubhaloBHMass',                            ## 0.775 corr. with Halo Mass
+CHOSEN_FEATURES = [#'SubhaloBHMass',                            ## 0.775 corr. with Halo Mass
                     'SubhaloGasMetallicity',                    ## 0.113 corr. with Halo Mass
-                    'SubhaloGasMetallicitySfr',                ## 0.108 corr. with Halo Mass
+                    #'SubhaloGasMetallicitySfr',                ## 0.108 corr. with Halo Mass
                     'SubhaloSFR',                              ## 0.070 corr. with Halo Mass
-                    'SubhaloStarMetallicity',                   ## 0.170 corr. with Halo Mass
+                    #'SubhaloStarMetallicity',                   ## 0.170 corr. with Halo Mass
                     'SubhaloStellarPhotometricsMassInRad',      ## 0.746 corr. with Halo Mass
                     'SubhaloStellarPhotometricsRad',           ## 0.380 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsU',             ## -0.153 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsB',             ## -0.161 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsV',             ## -0.167 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsK',             ## -0.172 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsg',             ## -0.163 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsr',             ## -0.169 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsi',             ## -0.171 corr. with Halo Mass
-                    #'SubhaloStellarPhotometricsz',             ## -0.172 corr. with Halo Mass
-                    'SubhaloVelX',                              ## -0.00168 corr. with Halo Mass
-                    'SubhaloVelY',                              ## 0.00215 corr. with Halo Mass
-                    'SubhaloVelZ'                               ## 0.00147 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsU',             ## -0.153 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsB',             ## -0.161 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsV',             ## -0.167 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsK',             ## -0.172 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsg',             ## -0.163 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsr',             ## -0.169 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsi',             ## -0.171 corr. with Halo Mass
+                    'SubhaloStellarPhotometricsz',             ## -0.172 corr. with Halo Mass
+                    #'SubhaloVelX',                              ## -0.00168 corr. with Halo Mass
+                    #'SubhaloVelY',                              ## 0.00215 corr. with Halo Mass
+                    #'SubhaloVelZ'                               ## 0.00147 corr. with Halo Mass
                     ]
 
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size',
-                        default=1024,
+                        default=8192,
                         type=int,
                         help='batch size')
 parser.add_argument('--train_steps',
-                        default=3000,
+                        default=1000,
                         type=int,
                         help='number of training steps')
 
@@ -121,7 +121,7 @@ def main(argv):
     #   HyperTune (https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
     regressor = tf.estimator.DNNRegressor(
                         feature_columns=feature_cols,
-                        hidden_units=[10,10,10],
+                        hidden_units=[12,12],
                         model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model"
                         )
 
@@ -161,19 +161,19 @@ def main(argv):
 
 
     # Write a local CSV of neural network predicted halo mass (from Test Set)
-    predictions_df.to_csv('NN_halo_mass_test_set2.csv')
+    predictions_df.to_csv('NN_halo_mass_test_set25.csv')
     #print("\nTESTING PREDICTIONS")
     #print()
     #print(predictions_df.head())
 
     # Write a local CSV of true halo mass (from Test Set)
-    test_label.to_csv('true_halo_mass_test_set2.csv')
+    test_label.to_csv('true_halo_mass_test_set25.csv')
     #print("\nTESTING TRUES")
     #print()
     #print(test_label.head())
 
     # Write a local CSV of all input features (from Test Set)
-    test_features.to_csv('features_test_set2.csv')
+    test_features.to_csv('features_test_set25.csv')
     #print("\nTESTING FEATURES")
     #print()
     #print(test_features.head())
