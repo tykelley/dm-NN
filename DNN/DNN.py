@@ -93,7 +93,7 @@ def main(argv):
     #   all batches have been run through (130,000 halos in train set / 1024 = 127 steps).
     train = (dm_data
                 .make_dataset(train_features, train_label)
-                .shuffle(150000)
+                .shuffle(30000)
                 .batch(args.batch_size)
                 .repeat()
             )
@@ -121,7 +121,7 @@ def main(argv):
     #   HyperTune (https://cloud.google.com/ml-engine/docs/hyperparameter-tuning-overview).
     regressor = tf.estimator.DNNRegressor(
                         feature_columns=feature_cols,
-                        hidden_units=[12,12],
+                        hidden_units=[12,64,256,64,12],
                         model_dir="/Users/aaron/Documents/Research/MLprograms/DM/dm-NN/DNN/Model"
                         )
 
@@ -161,19 +161,19 @@ def main(argv):
 
 
     # Write a local CSV of neural network predicted halo mass (from Test Set)
-    predictions_df.to_csv('NN_halo_mass_test_set25.csv')
+    predictions_df.to_csv('NN_halo_mass_test_set36.csv')
     #print("\nTESTING PREDICTIONS")
     #print()
     #print(predictions_df.head())
 
     # Write a local CSV of true halo mass (from Test Set)
-    test_label.to_csv('true_halo_mass_test_set25.csv')
+    test_label.to_csv('true_halo_mass_test_set36.csv')
     #print("\nTESTING TRUES")
     #print()
     #print(test_label.head())
 
     # Write a local CSV of all input features (from Test Set)
-    test_features.to_csv('features_test_set25.csv')
+    test_features.to_csv('features_test_set36.csv')
     #print("\nTESTING FEATURES")
     #print()
     #print(test_features.head())

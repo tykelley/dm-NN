@@ -62,6 +62,7 @@ def raw_dataframe():
 
 def load_data(label_name='SubhaloMass', train_fraction=0.8, seed=None):
     # Loads Illustris_1 data (prefiltered, not randomized)
+    # Applies filtering (i.e. stellar mass cut)
     # Splits Illustris)_1 data randomly into a training set and a test set
     # Fetches a pair of dataframes for training set, testing set
     #    features dataframe: all feature columns except label column {SubhaloMass}
@@ -69,15 +70,14 @@ def load_data(label_name='SubhaloMass', train_fraction=0.8, seed=None):
 
     data = raw_dataframe()
 
-    # TODO: consider applying more filtering here (i.e. remove halos with 0 black hole mass)
-    # Filter data if necessary
-    #data = data.dropna()
+    # Remove halos with stellar mass < 10^8 Mstar
+    data_stellar_cut = data.drop(data[data.SubhaloStellarPhotometricsMassInRad < 0.01].index)
 
     np.random.seed(seed)
 
     # Split Illustris_1 data randomly into 80% for training and 20% for testing
-    train_features = data.sample(frac=train_fraction, random_state=seed)
-    test_features = data.drop(train_features.index)
+    train_features = data_stellar_cut.sample(frac=train_fraction, random_state=seed)
+    test_features = data_stellar_cut.drop(train_features.index)
 
     # Remove label column {SubhaloMass} from Illustris_1 data and assign into new DataFrame
     train_label = train_features.pop(label_name)
